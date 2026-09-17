@@ -27,18 +27,3 @@ A Cursor Agent Skill for **designing and reviewing** complex business software w
 |------|-------------|
 | `SKILL.md` | Skill body (Agent entry point) |
 | `references/ddd-design-template.md` | Template for DDD technical design documents |
-
-## Use in a project
-
-Add as a git submodule, for example:
-
-```bash
-git submodule add git@github.com:johanchow/domain-driven-design-skill.git \
-  .cursor/skills/domain-driven-design
-```
-
-Update to the latest commit:
-
-```bash
-git submodule update --remote .cursor/skills/domain-driven-design
-```
