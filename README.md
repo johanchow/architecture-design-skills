@@ -1,29 +1,28 @@
-# domain-driven-design-skill
+# Cursor Skills
 
-A Cursor Agent Skill for **designing and reviewing** complex business software with Domain-Driven Design (DDD).
+本仓库聚合可复用的 Cursor Agent Skills，可直接拷贝/子模块安装到项目的 `.cursor/skills/`。
 
-## Purpose
+## Skills
 
-- Align business language, bounded contexts, and invariants before coding
-- Enforce layer boundaries (Domain / Application / Query·CQRS / Interface / Infrastructure)
-- Classify participants into canonical concept types (Aggregate, Use Case, Process Manager, Domain Event, etc.)
-- Produce actionable DDD design docs (see `references/ddd-design-template.md`)
+| 目录 | 用途 |
+|------|------|
+| [`domain-driven-design/`](./domain-driven-design/) | 用 DDD 设计/评审复杂业务软件（限界上下文、聚合、CQRS、分层边界） |
+| [`agent-design/`](./agent-design/) | 设计/评审可靠的 LLM Agent 系统（循环、工具、工作流、状态与记忆） |
 
-**Use when:** the subdomain has real business invariants, aggregates, CQRS, or context integration.  
-**Skip when:** the module is simple CRUD with no meaningful business rules.
+## 安装
 
-## Strategy
+把本仓库内容放到项目的 `.cursor/skills/`（整库作为子模块，或按需复制单个 skill 目录均可）：
 
-1. **Problem space first** — build a Domain Inventory (subdomain type, bounded context, upstream/downstream, integration style) before aggregates or deployment boundaries
-2. **Tactical DDD only where needed** — apply aggregates and domain events where complexity warrants them; keep simple modules simple
-3. **Keep layers distinct** — Domain owns no HTTP/ORM; Application owns use cases and transactions; write-side invariants do not live in projections
-4. **Aggregate = consistency boundary** — keep aggregates small, reference others by ID, use events across aggregates; use cases are not part of an aggregate
-5. **Fixed design order** — boundary & language → domain model → use cases → CQRS → interface contracts → infrastructure mapping
-6. **Validate with an event chain** — `Trigger → Adapter → Use Case/PM → Aggregate → Domain Event → Outbox/Projection`
+```bash
+# 作为子模块挂到 .cursor/skills
+git submodule add git@github.com:johanchow/domain-driven-design-skill.git .cursor/skills
+```
 
-## Contents
+或只拷贝某一个 skill：
 
-| Path | Description |
-|------|-------------|
-| `SKILL.md` | Skill body (Agent entry point) |
-| `references/ddd-design-template.md` | Template for DDD technical design documents |
+```bash
+cp -R domain-driven-design /path/to/project/.cursor/skills/
+cp -R agent-design /path/to/project/.cursor/skills/
+```
+
+每个 skill 以目录内的 `SKILL.md` 为 Agent 入口。
