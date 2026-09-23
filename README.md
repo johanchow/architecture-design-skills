@@ -15,7 +15,7 @@
 
 ```bash
 # 作为子模块挂到 .cursor/skills
-git submodule add git@github.com:johanchow/domain-driven-design-skill.git .cursor/skills
+git submodule add git@github.com:johanchow/architecture-design-skills.git .cursor/skills
 ```
 
 或只拷贝某一个 skill：
