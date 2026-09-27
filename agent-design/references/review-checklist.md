@@ -13,6 +13,7 @@ Mark every item pass, fail, or inapplicable with a reason.
 ## Contracts and state
 
 - [ ] Material inputs, outputs, tool calls, events, and handoffs have schemas and validation owners.
+- [ ] Each closed enum the model returns gives every value one distinct outcome. No two values mean the same thing or take the same runtime branch. Invalid or failed output maps to one existing value, not a new synonym.
 - [ ] Business facts, runtime state, working context, durable memory, and trace data have separate owners and lifecycles.
 - [ ] The model cannot directly create trusted facts, permissions, or durable writes without runtime/domain validation.
 - [ ] Context has provenance, scope, freshness, and token/size bounds.

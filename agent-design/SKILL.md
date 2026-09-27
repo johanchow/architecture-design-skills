@@ -55,7 +55,14 @@ matches the selected control model:
   affect facts or side effects; keep semantic interpretation with the model and
   deterministic validation, authorization, uniqueness, and persistence in
   code. Regexes and keywords may validate known formats, but must not be the
-  primary interpreter of open-ended user intent.
+  primary interpreter of open-ended user intent. A closed enum the model must
+  return has exactly one value per distinct outcome. Do not add a second value
+  that repeats another value's meaning, or that runtime code would handle with
+  the same branch. Name the chosen outcome explicitly: continuing the current
+  scene means returning that scene again, not a synonym such as `none` beside
+  `unclear`. Map invalid, empty, or failed model output onto the one existing
+  value that already means "not a usable choice"; do not invent another label
+  for that same failure.
 - **Material approval or action:** issue a server-controlled capability bound
   to actor, operation, target/version, expiry, and idempotency. For resumable
   workflows, apply the additional bindings in the workflow reference.

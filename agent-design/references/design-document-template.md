@@ -52,7 +52,8 @@ State explicit bounds that apply to the chosen control model. See
 For each model call, tool, handoff, event, and public entry point, document a
 versioned input/output schema, validation owner, error semantics, and backward
 compatibility policy. Prefer structured outputs for data that drives a decision
-or a side effect.
+or a side effect. In a closed enum the model returns, each value names one
+distinct outcome; do not define two values the runtime treats the same way.
 
 For model-proposed changes, include the candidate schema, authorized resolution
 set, unique-match rule, ambiguity/no-match behavior, and the explicit condition

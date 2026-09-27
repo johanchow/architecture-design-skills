@@ -33,7 +33,9 @@ needs to make:
 Every observation must be a typed result with a safe summary, not just prose.
 Use stable enums for control flow and structured fields for candidates,
 conflicts, retryability, and caller recovery. The model may use prose to explain
-an already-typed result, but prose must not be the only contract.
+an already-typed result, but prose must not be the only contract. Each enum
+value names one distinct outcome. Do not add a second value that repeats
+another value's meaning or that the runtime would handle with the same branch.
 
 Do not collapse materially different observations into one generic failure.
 For object references, distinguish at least:
