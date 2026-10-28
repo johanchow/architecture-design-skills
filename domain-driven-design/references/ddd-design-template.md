@@ -89,29 +89,29 @@ whose composition is fully clear from its Aggregate Card, and state why.
 - Rule implemented:
 - Does not own transactions, authorization, or transport.
 
-### Application use cases
+### Application commands
 
 #### State-change trigger matrix
 
-Complete one row for every material state-changing Use Case. A cross-context
+Complete one row for every material state-changing Command. A cross-context
 event is received by an Infrastructure consumer adapter, then interpreted by the
-receiving context's Use Case; it never calls the producer's Aggregate directly.
+receiving context's Command; it never calls the producer's Aggregate directly.
 
-| Trigger and source | Interface / entrypoint | Receiving Use Case or Process Manager | Aggregate / domain method | Local domain event | Outbox, projection, or next local action | Consistency, idempotency, failure/reconciliation |
+| Trigger and source | Interface / entrypoint | Receiving Command or Process Manager | Aggregate / domain method | Local domain event | Outbox, query, or next local action | Consistency, idempotency, failure/reconciliation |
 |---|---|---|---|---|---|---|
-| `<actor intent / scheduler / callback / EventName.v1>` | `<interface / worker / consumer adapter>` | `<UseCase / ProcessManager>` | `<Root.method() / DomainService>` | `<LocalPastTenseEvent>` | `<outbox / view / none>` | `<local transaction / key / retry or compensation>` |
+| `<actor intent / scheduler / callback / EventName.v1>` | `<interface / worker / consumer adapter>` | `<Command / ProcessManager>` | `<Root.method() / DomainService>` | `<LocalPastTenseEvent>` | `<outbox / view / none>` | `<local transaction / key / retry or compensation>` |
 
 - State whether the trigger is synchronous, locally deferred, or cross-context.
 - For a strong local invariant, show the synchronous Application-to-Domain call;
   do not introduce an event solely as a stylistic relay.
 - For an asynchronous or cross-context write path, provide a Trigger →
-  Interface → Use Case / Process Manager → Domain → Event/Projection sequence
+  Interface → Command / Process Manager → Domain → Event/Query sequence
   diagram and participant inventory.
 
-#### `<UseCaseName>`
+#### `<CommandName>`
 
 ```python
-class <UseCaseName>Input(BaseModel):
+class <CommandName>Input(BaseModel):
     actor_id: UUID
     aggregate_id: UUID
     idempotency_key: str
@@ -128,13 +128,13 @@ class <UseCaseName>Input(BaseModel):
 - Persisted domain events / published integration events:
 - Idempotency behavior:
 - Expected failures and user-safe result:
-- Command–Event–Projection Flow source and path when projection is asynchronous:
+- Command–Event–Query Flow source and path when query is asynchronous:
 
 #### Sequence Diagram Participant Inventory
 
 | Participant | Canonical type | Owned responsibility |
 |---|---|---|
-| `<name>` | `<Actor / Interface / Use Case / Query / Process Manager / Aggregate Root / Entity / Value Object / Domain Service / Domain Event / Integration Event / Read Model / Projection / Infrastructure>` | `<responsibility>` |
+| `<name>` | `<Actor / Interface / Command / Query / Process Manager / Aggregate Root / Entity / Value Object / Domain Service / Domain Event / Integration Event / Infrastructure>` | `<responsibility>` |
 
 ### Query side / CQRS
 
@@ -157,7 +157,7 @@ class <ViewName>(BaseModel):
 ### Interface contracts
 
 ```text
-POST /<resource>                 → <UseCaseName>
+POST /<resource>                 → <CommandName>
 GET  /<resource>/{id}            → <QueryName> / <ViewName>
 <Context>.<EventName>.v1         → published integration event
 ```
@@ -185,23 +185,23 @@ when an upstream/external model differs from the local language.
 
 #### Persistence and transaction
 
-| Aggregate / projection | Repository / store | Tables, keys, indexes, and FK policy | Transaction owner and atomic writes | Schema migration / compatibility / rollback |
+| Aggregate / query | Repository / store | Tables, keys, indexes, and FK policy | Transaction owner and atomic writes | Schema migration / compatibility / rollback |
 |---|---|---|---|---|
-| `<AggregateRoot>` | `<RepositoryPort / adapter>` | `<physical mapping>` | `<Use Case>` | `<strategy>` |
+| `<AggregateRoot>` | `<RepositoryPort / adapter>` | `<physical mapping>` | `<Command>` | `<strategy>` |
 
-- One repository port per aggregate root; projections use query/projection stores,
+- One repository port per aggregate root; queries use query stores,
   never aggregate repositories for writes.
 - State the idempotency constraint and where it is enforced.
 - For a schema change, state migration order, compatibility window, backfill/rebuild
   and rollback or why those are unnecessary.
 
-#### Async delivery and projections
+#### Async delivery and queries
 
-| Event / job | Outbox / producer owner | Consumer adapter → receiving Use Case / projection | Idempotency key | Ordering and freshness | Retry, dead-letter, reconciliation, replay |
+| Event / job | Outbox / producer owner | Consumer adapter → receiving Command / query | Idempotency key | Ordering and freshness | Retry, dead-letter, reconciliation, replay |
 |---|---|---|---|---|---|
 | `<EventName.v1>` | `<local transaction owner>` | `<consumer>` | `<key>` | `<assumption / lag>` | `<operational behavior>` |
 
-If no asynchronous delivery exists, state that the use case remains synchronous
+If no asynchronous delivery exists, state that the command remains synchronous
 and why. An audit log, trace, or ordinary retry record is not automatically a
 domain or integration event.
 
@@ -217,18 +217,18 @@ domain or integration event.
 
 ```gherkin
 Given <domain state>
-When <actor> invokes <use case>
+When <actor> invokes <command>
 Then <aggregate invariant/result>
-And <domain event or read model outcome>
+And <domain event or query outcome>
 ```
 
 ## 3. Cross-context workflow
 
 Use this only when a business outcome spans contexts.
 
-| Step | Owning context | Trigger / local Use Case / published event | Receiving Use Case | Consistency | Failure / compensation |
+| Step | Owning context | Trigger / local Command / published event | Receiving Command | Consistency | Failure / compensation |
 |---|---|---|---|---|---|
-| 1 | `<context>` | `<use case/event>` | `<UseCase or N/A>` | Local transaction | `<behavior>` |
+| 1 | `<context>` | `<command/event>` | `<Command or N/A>` | Local transaction | `<behavior>` |
 
 Document the Process Manager / Saga only when it owns real multi-step workflow
 state. Do not use it as a generic event relay.
