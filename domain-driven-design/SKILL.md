@@ -1,17 +1,25 @@
 ---
 name: domain-driven-design
-description: Design or review complex business software with Domain-Driven Design. Use for subdomains, bounded contexts, aggregates, domain services, domain events, application-layer CQRS, context integration, or DDD-oriented technical design documents. Do not use for simple CRUD work with no meaningful business invariants.
+description: Design or review complex business software with Domain-Driven Design. Use for domains, aggregates, domain services, domain events, application-layer CQRS, domain integration, or DDD-oriented technical design documents. Do not use for simple CRUD work with no meaningful business invariants.
 metadata:
-  version: "2.4.0"
+  version: "2.5.0"
   short-description: DDD domains, aggregates, CQRS, and contracts
 ---
 
 # Domain-Driven Design
 
 Use DDD to align software boundaries with business language and invariants. Start
-with the problem space—subdomains and ubiquitous language—before choosing
+with the problem space—domains and the ubiquitous language—before choosing
 aggregates, repositories, CQRS, or deployment boundaries. Apply tactical DDD only
 where business complexity warrants it; simple CRUD modules may remain simple.
+
+A **Domain** is a business boundary that owns independent business semantics, its
+model, and its rules. Do not split that boundary into a Subdomain and a Bounded
+Context, and do not document them as nested objects. Core, supporting, and
+generic classify a Domain; they are not a second boundary. The Domain **layer**
+below is the code layer inside that boundary which holds aggregates and
+invariants. Commands, queries, process managers, and adapters stay in the other
+layers of the same Domain.
 
 ## Non-negotiable layer boundaries
 
@@ -23,7 +31,7 @@ Keep these concerns distinct in both designs and code:
 | Application | Commands, queries, process managers, authorization, transaction boundaries, aggregate loading/saving, event publication | Domain rules or direct persistence details |
 | Query / CQRS | Queries, query services, response DTOs | Aggregate mutation or write-side invariants |
 | Interface | HTTP/gRPC/SSE endpoints, message-consumer entrypoints, request/response DTOs, authentication adapters, transport error mapping | Command orchestration, domain rules, ORM/database access |
-| Infrastructure | Repository and ORM implementations, database, cache, Outbox, workers, queues, model/tool/third-party adapters, logging/metrics/tracing | Domain policy, cross-context business decisions, public API DTOs |
+| Infrastructure | Repository and ORM implementations, database, cache, Outbox, workers, queues, model/tool/third-party adapters, logging/metrics/tracing | Domain policy, cross-domain business decisions, public API DTOs |
 
 An aggregate is a transactional consistency boundary, not a module or table. The
 aggregate root is the only external mutation entry point. Keep aggregates small,
@@ -31,8 +39,8 @@ reference other aggregates by ID, and use events for consistency outside the
 aggregate.
 
 Commands, queries, process managers, and APIs are **not members of an
-aggregate**. They belong to the application and interface layers of the bounded
-context that owns the command.
+aggregate**. They belong to the application and interface layers of the domain
+that owns the command.
 
 ## Canonical concept types
 
@@ -44,17 +52,17 @@ Use Case or Read Model / Projection as additional types.
 
 | Type family | Canonical type | Decision rule |
 |---|---|---|
-| External | Actor | A person, external system, or upstream context initiates work. |
+| External | Actor | A person, external system, or upstream domain initiates work. |
 | Interface | Interface | Receives HTTP, RPC, SSE, or messages and translates them into application calls. |
 | Application | Command | Handles a user, system, or integration-event intent; authorizes, coordinates a local transaction, and may change business state. |
 | Application | Query | Reads information without changing business state. Query data is rebuildable and is never the authority for write-side mutation. |
-| Application | Process Manager | Preserves a business process across requests, events, or time without owning another context's business aggregate. |
+| Application | Process Manager | Preserves a business process across requests, events, or time without owning another domain's business aggregate. |
 | Domain | Aggregate Root | The strong-consistency boundary and only external mutation entry point for its aggregate. |
 | Domain | Entity | A domain object with identity that remains distinguishable over time. |
 | Domain | Value Object | An identity-free concept compared by value. |
 | Domain | Domain Service | A business rule that belongs to no single aggregate root. |
-| Domain | Domain Event | A business fact that occurred inside the current bounded context. |
-| Cross-context | Integration Event | A stable fact contract published for another bounded context. |
+| Domain | Domain Event | A business fact that occurred inside the current domain. |
+| Cross-domain | Integration Event | A stable fact contract published for another domain. |
 | Infrastructure | Infrastructure | Persistence, repository adapters, Outbox, workers, schedulers/timers, storage, caches, gateways, and observability implementations. A scheduler or timer is the entry adapter for a scheduled trigger, never an Interface participant. |
 
 Names such as workflow, handler, controller, worker, scheduler, outbox, and
@@ -70,16 +78,16 @@ mutates an Aggregate Root directly.
 Before modeling objects, produce a Domain Inventory containing **N named domains**.
 For each, record:
 
-- subdomain type: core, supporting, or generic;
-- bounded context name and its ubiquitous language;
-- owner and responsibility;
-- upstream and downstream contexts;
+- strategic type: core, supporting, or generic;
+- ubiquitous language;
+- the semantics, model, and rules it owns, plus its responsibility;
+- upstream and downstream domains;
 - integration style: published language, ACL, customer-supplier, partnership, or
   separate ways.
 
 Do not equate a database table, a microservice, an AI agent, or a UI page with a
-bounded context without evidence of a distinct model and language. A modular
-monolith can host many bounded contexts.
+Domain unless it owns independent semantics, a model, and rules. A modular
+monolith can host many domains.
 
 Use a trigger-aware Event Storming-style chain to validate the model:
 
@@ -90,11 +98,11 @@ Trigger → Interface / Infrastructure Adapter → Command or Process Manager
 
 Name Commands as imperatives (`ConfirmPlan`), domain events in past tense
 (`PlanConfirmed`), and queries as questions (`GetTodayPlan`). Flag missing
-business decisions, ambiguous terms, and cross-context handoffs before coding.
+business decisions, ambiguous terms, and cross-domain handoffs before coding.
 
-### 2. Design every bounded context
+### 2. Design every domain
 
-For each bounded context, document the following in this order:
+For each domain, document the following in this order:
 
 1. **Boundary and language** — responsibility, non-goals, terms, upstream and
    downstream contracts.
@@ -126,44 +134,49 @@ never replace API signatures, field schemas, authorization rules, or invariants.
 
 At the system level, distinguish these two diagrams:
 
-- **DDD Context Map** — shows every bounded context, Core/Supporting/Generic
+- **DDD Domain Map** — shows every domain, Core/Supporting/Generic
   classification, business ownership, upstream/downstream direction, and the
   integration contract (published event, API, ACL, or Process Manager). It does
   not show databases, queues, controllers, or deployment topology.
 - **Layered Architecture Map** — shows dependency direction across interface,
-  application, domain-context modules, and infrastructure/runtime. It may show
+  application, domain modules, and infrastructure/runtime. It may show
   clients, APIs, workers, repositories, Outbox, and storage, but it must not
-  replace the Context Map's ownership semantics.
+  replace the Domain Map's ownership semantics.
 
-Within a bounded context, choose the smallest diagrams that establish the needed
+Within a domain, choose the smallest diagrams that establish the needed
 facts:
 
 | Diagram | Use when | Must show | Must not show |
 |---|---|---|---|
-| Aggregate Map | The context has two or more write aggregates, or one aggregate coordinates with another | Aggregate roots, ID/event references, write vs query models, strong vs eventual consistency | ORM joins or direct object references across aggregates |
+| Entity-Relationship Diagram | Every domain that owns persisted tables | Tables this domain owns, primary keys, foreign keys, cardinality, and whether each table backs an aggregate or a query. Other domains appear only as ID references | Invariants, command flow, or tables owned by another domain |
+| Aggregate Map | The domain has two or more write aggregates, or one aggregate coordinates with another | Aggregate roots, ID/event references, write vs query models, strong vs eventual consistency | ORM joins or direct object references across aggregates |
 | Aggregate Internal UML | An aggregate owns child entities/value objects or has non-obvious composition | Root, each child entity identity and key attributes, value-object fields, multiplicity, mutating behaviors and invariant owner | API DTOs, repository implementations, ORM annotations, other aggregate objects |
 | State Diagram | An aggregate has non-trivial lifecycle/status transitions | States, Commands/events that trigger transitions, terminal/recoverable paths | Low-level persistence transitions |
 | Command–Event–Query Flow | A state-changing Command uses Outbox, worker, asynchronous query, or CQRS | Actor, Command, aggregate, domain/integration event, query, consistency point | Model hidden reasoning or unrelated infrastructure |
-| Event Choreography / Saga Flow | A business outcome spans bounded contexts | Event owner, consumer, local transaction, compensation/reconciliation | A fictitious global transaction |
+| Event Choreography / Saga Flow | A business outcome spans domains | Event owner, consumer, local transaction, compensation/reconciliation | A fictitious global transaction |
 | Request Sequence Diagram | API/SSE/Agent calls have meaningful sync/async or resume behavior | Caller, Interface, Command/Process Manager, domain port, async return/continuation | Every internal method call |
 
 Minimum evidence rules:
 
-- With two or more bounded contexts, provide one Context Map. Add a Layered
+- Every domain that owns persisted tables provides one ER diagram and its
+  source path. The diagram is required, not decorative. A domain that owns no
+  tables states that instead of inventing tables. The ER diagram does not
+  replace the Entity Inventory.
+- With two or more domains, provide one Domain Map. Add a Layered
   Architecture Map when persistence, asynchronous processing, external adapters,
   or runtime/layer dependencies are material to the design.
-- With two or more write aggregates in a context, provide an Aggregate Map.
+- With two or more write aggregates in a domain, provide an Aggregate Map.
 - When an aggregate owns a child entity, or an invariant depends on relations among
   internal objects, add both an **Aggregate Internal UML** and an **Entity
   Inventory**. A simple root with only self-contained value objects may omit them,
   but state the reason explicitly.
 - Add a State Diagram for any non-trivial lifecycle and a Command–Event–Query
   Flow for any eventually consistent state-changing Command.
-- Add Event Choreography when one business outcome crosses contexts.
+- Add Event Choreography when one business outcome crosses domains.
 - Add a Request Sequence Diagram when an API, SSE, model/tool/third-party call,
   or checkpoint/resume path has material success or failure behavior.
 - Add a trigger-to-state-change sequence for a material asynchronous or
-  cross-context write path. It must distinguish the transport adapter,
+  cross-domain write path. It must distinguish the transport adapter,
   Command, Aggregate/Domain Service, Domain Event, and Outbox or
   query; do not leave a diagram that merely connects event names.
 - When no diagram is needed, state the reason rather than creating decorative
@@ -188,11 +201,11 @@ For a state-changing Command, the application layer normally:
 2. opens the transaction and loads one aggregate through its repository;
 3. invokes domain behavior or a domain service;
 4. saves the aggregate and persists its domain events atomically;
-5. publishes an integration event through an Outbox when another context must
+5. publishes an integration event through an Outbox when another domain must
    react.
 
-Do not let a Command mutate another bounded context's aggregate directly.
-If a strict invariant appears to require that, reconsider the aggregate/context
+Do not let a Command mutate another domain's aggregate directly.
+If a strict invariant appears to require that, reconsider the aggregate or domain
 boundary. Otherwise use eventual consistency, an integration event, and where
 needed a Process Manager / Saga for the multi-step workflow.
 
@@ -207,22 +220,22 @@ method and an event without identifying who invokes the method and when.
 | User/API intent | Interface endpoint | Authorize, validate, open local transaction, invoke Command | Load root and call its behavior / a domain service | Persist domain events; publish only required stable integration facts |
 | Scheduled or batch job | Scheduler/worker adapter | Start an idempotent Command with a defined time/window | Invoke domain service and aggregate behavior | Record checkpoint/result; retry or reconcile as specified |
 | External callback | Webhook/SDK adapter | Authenticate/translate callback, deduplicate, invoke a local Command | Local aggregate behavior only | Persist local outcome and optionally publish integration event |
-| Cross-context integration event | Consumer adapter then receiving-context Command | Validate schema/version, deduplicate, apply ACL, authorize system actor, open local transaction | Receiving context's own aggregate/domain service | Persist local events; its subsequent publication is a new local decision |
-| Same-context strongly consistent rule | Existing Command | Coordinate required roots in one local transaction | Directly call aggregate/domain-service behaviors | Do not introduce async indirection merely for event style |
-| Same-context deferred reaction | Local event dispatcher/worker | Start a separately idempotent local Command after commit | Load and mutate local aggregate as needed | Outbox/job/retry policy and eventual-consistency statement |
+| Cross-domain integration event | Consumer adapter then receiving-domain Command | Validate schema/version, deduplicate, apply ACL, authorize system actor, open local transaction | Receiving domain's own aggregate/domain service | Persist local events; its subsequent publication is a new local decision |
+| Same-domain strongly consistent rule | Existing Command | Coordinate required roots in one local transaction | Directly call aggregate/domain-service behaviors | Do not introduce async indirection merely for event style |
+| Same-domain deferred reaction | Local event dispatcher/worker | Start a separately idempotent local Command after commit | Load and mutate local aggregate as needed | Outbox/job/retry policy and eventual-consistency statement |
 
 The Infrastructure adapter **receives and reliably delivers** a transport message;
 the receiving Command **interprets it as a local business intent**.
-An integration event must never invoke another context's aggregate method directly.
+An integration event must never invoke another domain's aggregate method directly.
 Likewise, a Domain Event is a local business fact, not a queue message, log entry,
 or universal trigger: the Application layer decides whether it is persisted,
 dispatched locally after commit, reflected in a query, or translated into a versioned
 integration event.
 
 Use direct synchronous domain calls when one local invariant requires atomic
-consistency. Use an Outbox-backed integration event when a different bounded
-context may react eventually. A Process Manager/Saga owns only genuine
-multi-context workflow state; it is not a generic relay. For each asynchronous
+consistency. Use an Outbox-backed integration event when a different domain
+may react eventually. A Process Manager/Saga owns only genuine
+multi-domain workflow state; it is not a generic relay. For each asynchronous
 reaction, document its new transaction, idempotency key, ordering assumption, and
 failure/reconciliation behavior.
 
@@ -230,8 +243,8 @@ For the query side:
 
 - queries do not mutate aggregates;
 - queries may be denormalized and eventually consistent;
-- cross-context views are assembled from published queries or an explicit
-  query/BFF layer, never by exposing another context's aggregate internals;
+- cross-domain views are assembled from published queries or an explicit
+  query/BFF layer, never by exposing another domain's aggregate internals;
 - state the freshness guarantee of every material view.
 
 CQRS does not require Event Sourcing. Use an immutable fact ledger or event store
@@ -242,20 +255,20 @@ records as Event Sourcing.
 
 Use the following dependency and invocation constraints to keep type boundaries
 visible in designs and code. A listed call is allowed only when it remains inside
-the owning bounded context unless the row explicitly uses an Integration Event or
+the owning domain unless the row explicitly uses an Integration Event or
 authorized Query boundary.
 
 | Source type | May invoke or depend on | Must not invoke or mutate directly |
 |---|---|---|
 | Interface | Command, Query, Process Manager | Aggregate Root, repository implementation, ORM/session details |
-| Command | Aggregate Root, Domain Service, repository/publisher ports, authorized Query | Another context's Aggregate Root or its persistence implementation |
-| Process Manager | Its own process state, local Commands, authorized Queries, Integration Event ports | Another context's Aggregate Root or an unbounded global transaction |
+| Command | Aggregate Root, Domain Service, repository/publisher ports, authorized Query | Another domain's Aggregate Root or its persistence implementation |
+| Process Manager | Its own process state, local Commands, authorized Queries, Integration Event ports | Another domain's Aggregate Root or an unbounded global transaction |
 | Query | Query store and query ports | Aggregate Root mutation, write-side repository methods, or use as a write-side source of truth |
 | Aggregate Root | Its entities, value objects, local domain rules | HTTP, ORM/session, Outbox, worker, scheduler, external SDK |
-| Domain Service | Aggregate Roots and value objects in its context | Interface transport, persistence implementation, Outbox, worker, scheduler |
+| Domain Service | Aggregate Roots and value objects in its domain | Interface transport, persistence implementation, Outbox, worker, scheduler |
 | Infrastructure (worker or scheduler role) | Command entrypoint | Aggregate Root field mutation or Domain Service invocation without a Command |
 
-Cross-context state change always follows this shape:
+Cross-domain state change always follows this shape:
 
 ```text
 publishing Command → Integration Event / Outbox → consumer Interface
@@ -267,7 +280,7 @@ or worker record is not a Domain Event merely because it is durable.
 
 ### 5. Specify infrastructure explicitly
 
-For every bounded context with persistence, asynchronous processing, or an
+For every domain with persistence, asynchronous processing, or an
 external dependency, produce an **Infrastructure Design Card**. It is an
 implementation contract for adapters and operational behavior, not a second
 domain model. Include:
@@ -276,8 +289,9 @@ domain model. Include:
    protocol/dependency, configuration/secrets boundary, timeout, retry, rate
    limit/circuit-breaker or explicit reason they do not apply, and error mapping.
 2. **Persistence and transactions** — one repository port per aggregate root,
-   tables/key constraints/indexes, transaction owner, atomic writes, migration
-   compatibility, and rollback/backfill strategy where data changes.
+   the domain ER diagram, tables/key constraints/indexes, transaction owner,
+   atomic writes, migration compatibility, and rollback/backfill strategy where
+   data changes.
 3. **Async delivery and queries** — Outbox owner, event schema/version,
    consumer, idempotency key, ordering assumption, retry, dead-letter or
    reconciliation, replay/rebuild process, and query freshness.
@@ -292,14 +306,14 @@ calls inside aggregates or domain services. Existing code may have transitional
 direct dependencies; document them as current implementation and state the target
 port boundary instead of disguising them as domain behavior.
 
-### 6. Integrate bounded contexts explicitly
+### 6. Integrate domains explicitly
 
-Within a bounded context, domain events express facts meaningful to that domain.
-Across contexts, translate only stable facts into published/integration events.
+Within a domain, domain events express facts meaningful to that domain.
+Across domains, translate only stable facts into published/integration events.
 Specify event owner, schema version, idempotency key, ordering assumption,
 consumer behavior, retry policy, and dead-letter/reconciliation path.
 
-The published-event consumer belongs to the **receiving** bounded context. Its
+The published-event consumer belongs to the **receiving** domain. Its
 adapter handles transport concerns; its receiving Command maps the published
 language through an ACL where necessary and invokes local domain behavior. It
 does not share the producer's Aggregate, repository, transaction, or
@@ -309,13 +323,13 @@ Use an Anti-Corruption Layer when an external or upstream model would pollute th
 local language. AI runtimes, LLM tools, and external APIs are adapters: they may
 propose data, but domain/application rules validate it before it changes business
 state. An Agent Coordinator is normally an application-level Process Manager, not
-automatically a bounded context or aggregate.
+automatically a domain or aggregate.
 
 ## Required delivery
 
 When asked to design or review a DDD system, return:
 
-1. the Domain Inventory and Context Map;
+1. the Domain Inventory and Domain Map;
 2. one Aggregate Card for every write aggregate;
 3. one Entity Inventory for every non-trivial aggregate: each entity/value object
    has its identity (if any), key domain attributes, domain behaviors, and its
@@ -323,18 +337,19 @@ When asked to design or review a DDD system, return:
 4. one Command Card for every state-changing Command;
 5. query models and their freshness/consistency rules;
 6. public/internal API or message signatures;
-7. cross-context event contracts and failure handling;
-8. one Infrastructure Design Card for every context with persistence,
+7. cross-domain event contracts and failure handling;
+8. one Infrastructure Design Card for every domain with persistence,
    asynchronous processing, or external dependencies;
-9. the diagrams required by the visual-evidence rules, with their source paths;
+9. the diagrams required by the visual-evidence rules, including one ER diagram
+   for every domain that owns tables, with their source paths;
 10. a Trigger → Application → Domain → Event/Query Matrix for every material
     write flow, plus a sequence diagram for each material asynchronous or
-    cross-context state change;
+    cross-domain state change;
 11. testable invariants and acceptance scenarios, including failure/retry behavior
     where infrastructure is material.
 
 For a review, identify missing ownership, mixed layers, aggregate-boundary
-violations, direct cross-context writes, accidental Event Sourcing, and query
+violations, direct cross-domain writes, accidental Event Sourcing, and query
 models used as write models. Recommend the smallest change that repairs each
 issue.
 
@@ -358,13 +373,13 @@ issue.
   state.
 - A domain event is not a log line, model trace, or transport retry record.
 - Do not use an event as vague control flow. Name its owner, classify it as local
-  Domain Event or cross-context Integration Event, and show the receiving
+  Domain Event or cross-domain Integration Event, and show the receiving
   Command and resulting local domain behavior. A transport consumer may not
   mutate an Aggregate by setting ORM fields directly.
 - Never expose ORM models, aggregate internals, or raw event payloads as public
   API contracts.
 - Keep terminology singular and owned: one concept has one definition within a
-  bounded context; different contexts may intentionally translate it.
+  domain; different domains may intentionally translate it.
 - In an Entity Inventory, list only state and methods that participate in domain
   decisions: identity, lifecycle, policy evaluation, or invariant enforcement.
   Do not mechanically mirror database columns, getters/setters, DTO fields, or

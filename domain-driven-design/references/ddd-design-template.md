@@ -4,31 +4,32 @@ Use this template when producing a new design or substantially restructuring an
 existing DDD design. Omit sections that are genuinely inapplicable and state why;
 do not invent aggregates or CQRS solely to fill a template.
 
-## 1. Domain Inventory and Context Map
+## 1. Domain Inventory and Domain Map
 
-| # | Domain / subdomain | Type | Bounded context | Owns | Upstream / downstream | Integration |
-|---|---|---|---|---|---|---|
-| 1 | `<name>` | Core / Supporting / Generic | `<context>` | `<business responsibility>` | `<contexts>` | `<pattern + contract>` |
+| # | Domain | Type | Owns | Upstream / downstream | Integration |
+|---|---|---|---|---|---|
+| 1 | `<name>` | Core / Supporting / Generic | `<semantics, model, and rules>` | `<domains>` | `<pattern + contract>` |
 
 ```text
-<Upstream Context> -- <Published Event / ACL / API> --> <Downstream Context>
+<Upstream Domain> -- <Published Event / ACL / API> --> <Downstream Domain>
 ```
 
-Define the ubiquitous language that differs across contexts. State explicitly
-which context owns each mutable business concept.
+A Domain is the business boundary. Do not add a Subdomain or Bounded Context
+column. Define the ubiquitous language that differs across domains. State
+explicitly which domain owns each mutable business concept.
 
 ### Global visual evidence
 
-- Context Map source and path:
+- Domain Map source and path:
 - Layered Architecture Map source and path, or reason it is unnecessary:
 
-The Context Map documents business ownership and context integration. The Layered
+The Domain Map documents business ownership and integration between domains. The Layered
 Architecture Map documents Interface → Application → Domain ports and
 Infrastructure adapter dependency direction; do not combine the two into an
 unreadable all-in-one diagram. It is required when persistence, asynchronous
 processing, external adapters, or runtime/layer dependencies are material.
 
-## 2. Bounded Context: `<name>`
+## 2. Domain: `<name>`
 
 ### Boundary
 
@@ -93,18 +94,18 @@ whose composition is fully clear from its Aggregate Card, and state why.
 
 #### State-change trigger matrix
 
-Complete one row for every material state-changing Command. A cross-context
+Complete one row for every material state-changing Command. A cross-domain
 event is received by an Infrastructure consumer adapter, then interpreted by the
-receiving context's Command; it never calls the producer's Aggregate directly.
+receiving domain's Command; it never calls the producer's Aggregate directly.
 
 | Trigger and source | Interface / entrypoint | Receiving Command or Process Manager | Aggregate / domain method | Local domain event | Outbox, query, or next local action | Consistency, idempotency, failure/reconciliation |
 |---|---|---|---|---|---|---|
 | `<actor intent / scheduler / callback / EventName.v1>` | `<interface / worker / consumer adapter>` | `<Command / ProcessManager>` | `<Root.method() / DomainService>` | `<LocalPastTenseEvent>` | `<outbox / view / none>` | `<local transaction / key / retry or compensation>` |
 
-- State whether the trigger is synchronous, locally deferred, or cross-context.
+- State whether the trigger is synchronous, locally deferred, or cross-domain.
 - For a strong local invariant, show the synchronous Application-to-Domain call;
   do not introduce an event solely as a stylistic relay.
-- For an asynchronous or cross-context write path, provide a Trigger →
+- For an asynchronous or cross-domain write path, provide a Trigger →
   Interface → Command / Process Manager → Domain → Event/Query sequence
   diagram and participant inventory.
 
@@ -159,7 +160,7 @@ class <ViewName>(BaseModel):
 ```text
 POST /<resource>                 → <CommandName>
 GET  /<resource>/{id}            → <QueryName> / <ViewName>
-<Context>.<EventName>.v1         → published integration event
+<Domain>.<EventName>.v1         → published integration event
 ```
 
 - Request/response schemas:
@@ -182,6 +183,19 @@ it must not redefine domain invariants.
 Application and Domain code depend only on the port. The concrete adapter is
 assembled at the composition root. State an Anti-Corruption Layer translation
 when an upstream/external model differs from the local language.
+
+#### Entity-Relationship Diagram
+
+Required for every domain that owns persisted tables. A domain that owns no
+tables states that here and does not invent an ER diagram.
+
+- Diagram source and path:
+- Tables owned by this domain, and whether each backs an aggregate or a query:
+- Primary keys, foreign keys, and cardinality:
+- ID-only references to tables owned by other domains:
+
+The diagram shows persisted structure. It does not restate invariants or replace
+the Entity Inventory.
 
 #### Persistence and transaction
 
@@ -222,18 +236,18 @@ Then <aggregate invariant/result>
 And <domain event or query outcome>
 ```
 
-## 3. Cross-context workflow
+## 3. Cross-domain workflow
 
-Use this only when a business outcome spans contexts.
+Use this only when a business outcome spans domains.
 
-| Step | Owning context | Trigger / local Command / published event | Receiving Command | Consistency | Failure / compensation |
+| Step | Owning domain | Trigger / local Command / published event | Receiving Command | Consistency | Failure / compensation |
 |---|---|---|---|---|---|
-| 1 | `<context>` | `<command/event>` | `<Command or N/A>` | Local transaction | `<behavior>` |
+| 1 | `<domain>` | `<command/event>` | `<Command or N/A>` | Local transaction | `<behavior>` |
 
 Document the Process Manager / Saga only when it owns real multi-step workflow
 state. Do not use it as a generic event relay.
 
 - Event Choreography / Saga Flow source and path when this workflow crosses
-  contexts:
+  domains:
 - Request Sequence Diagram source and path when API, SSE, or resume semantics
   are material to the workflow:

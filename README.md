@@ -6,7 +6,7 @@ Reusable Cursor Agent Skills. Copy a skill directory into a project's `.cursor/s
 
 | Directory | Purpose |
 |-----------|---------|
-| [`domain-driven-design/`](./domain-driven-design/) | Design or review complex business software with DDD (bounded contexts, aggregates, CQRS, and layer boundaries) |
+| [`domain-driven-design/`](./domain-driven-design/) | Design or review complex business software with DDD (domains, aggregates, CQRS, and layer boundaries) |
 | [`agent-design/`](./agent-design/) | Design or review reliable LLM agent systems (loops, tools, workflows, state, and memory) |
 
 ## Install
