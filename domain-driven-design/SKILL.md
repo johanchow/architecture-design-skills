@@ -2,7 +2,7 @@
 name: domain-driven-design
 description: Design or review complex business software with Domain-Driven Design. Use for domains, aggregates, domain services, domain events, application-layer CQRS, domain integration, or DDD-oriented technical design documents. Do not use for simple CRUD work with no meaningful business invariants.
 metadata:
-  version: "2.5.0"
+  version: "2.5.1"
   short-description: DDD domains, aggregates, CQRS, and contracts
 ---
 
@@ -330,7 +330,8 @@ automatically a domain or aggregate.
 When asked to design or review a DDD system, return:
 
 1. the Domain Inventory and Domain Map;
-2. one Aggregate Card for every write aggregate;
+2. one Aggregate Root design for every write aggregate, naming the root and
+   documenting its aggregate boundary, owned objects, behaviors, and invariants;
 3. one Entity Inventory for every non-trivial aggregate: each entity/value object
    has its identity (if any), key domain attributes, domain behaviors, and its
    responsibility for invariants; this is a design contract, not an ORM field list;

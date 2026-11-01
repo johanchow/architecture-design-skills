@@ -48,7 +48,7 @@ processing, external adapters, or runtime/layer dependencies are material.
 - ID/event references between aggregates:
 - Strong-consistency boundaries and eventual-consistency paths:
 
-#### Aggregate: `<AggregateRoot>`
+#### Aggregate Root: `<AggregateRoot>`
 
 - Identity:
 - Entities owned by the aggregate:
@@ -69,7 +69,7 @@ processing, external adapters, or runtime/layer dependencies are material.
 
 Do not turn this into an ORM schema. Include only state and methods that affect a
 domain decision, lifecycle, or invariant. Omit the table only for a simple root
-whose composition is fully clear from its Aggregate Card, and state why.
+whose composition is fully clear from its Aggregate Root design, and state why.
 
 #### Aggregate Internal UML
 
