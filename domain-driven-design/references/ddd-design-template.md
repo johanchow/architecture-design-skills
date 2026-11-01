@@ -48,28 +48,30 @@ processing, external adapters, or runtime/layer dependencies are material.
 - ID/event references between aggregates:
 - Strong-consistency boundaries and eventual-consistency paths:
 
-#### Aggregate Root: `<AggregateRoot>`
+#### Aggregate Root summary
 
-- Identity:
-- Entities owned by the aggregate:
-- Value objects:
-- Invariants enforced atomically:
-- Public domain behaviors:
-- Domain events raised:
-- References to other aggregates (IDs only):
-- Repository port:
+This domain owns **N Aggregate Roots**. Use one shared table:
 
-#### Entity Inventory (required for a non-trivial aggregate)
+| Aggregate Root | Consistency boundary | Business responsibility |
+|---|---|---|
+| `<RootA>` | `<what changes atomically; what stays outside>` | `<business state and decisions owned>` |
+| `<RootB>` | `<what changes atomically; what stays outside>` | `<business state and decisions owned>` |
 
-| Object | Kind | Identity | Key domain attributes | Public domain behaviors | Invariant responsibility |
-|---|---|---|---|---|---|
-| `<AggregateRoot>` | Aggregate root | `<id>` | `<only decision-relevant state>` | `<verbs, not CRUD setters>` | `<what it enforces atomically>` |
-| `<ChildEntity>` | Entity | `<local identity / composite identity>` | `<key state>` | `<verbs>` | `<its local rule, or “owned by root”>` |
-| `<ValueObject>` | Value object | None | `<immutable fields>` | `<validation / calculation>` | `<valid construction rule>` |
+Do not create separate root-by-root Identity / children / value objects / methods /
+events / repository tables or bullet checklists. Explain important invariants once
+near the behavior they constrain. Put repository mappings in infrastructure and
+command inputs in application contracts instead of duplicating them here.
 
-Do not turn this into an ORM schema. Include only state and methods that affect a
-domain decision, lifecycle, or invariant. Omit the table only for a simple root
-whose composition is fully clear from its Aggregate Root design, and state why.
+#### Entity Inventory (shared by the domain, when needed)
+
+| Object | Kind | Identity, if relevant | Behavior and invariant responsibility |
+|---|---|---|---|
+| `<ChildEntity>` | Entity | `<identity needed over time>` | `<decision-relevant rules, owned through its root>` |
+| `<ValueObject>` | Value Object | None | `<value semantics and valid construction>` |
+
+Use one shared inventory for non-trivial object relationships, not another table
+per aggregate. Do not repeat the root summary, list persistence helpers, or mirror
+ORM fields. For simple self-contained roots, state why further inventory is unnecessary.
 
 #### Aggregate Internal UML
 

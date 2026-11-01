@@ -2,7 +2,7 @@
 name: domain-driven-design
 description: Design or review complex business software with Domain-Driven Design. Use for domains, aggregates, domain services, domain events, application-layer CQRS, domain integration, or DDD-oriented technical design documents. Do not use for simple CRUD work with no meaningful business invariants.
 metadata:
-  version: "2.5.1"
+  version: "2.5.2"
   short-description: DDD domains, aggregates, CQRS, and contracts
 ---
 
@@ -106,8 +106,12 @@ For each domain, document the following in this order:
 
 1. **Boundary and language** — responsibility, non-goals, terms, upstream and
    downstream contracts.
-2. **Domain model** — aggregates, entities, value objects, invariants,
-   repositories, factories where needed, domain services, and domain events.
+2. **Domain model** — state how many Aggregate Roots the domain owns and
+   provide one consolidated table naming each root, its consistency boundary,
+   and business responsibility. Do not create a separate Identity / children /
+   value objects / methods / events / repository checklist or table for every root.
+   Describe important invariants and object relationships once, where they are
+   needed by the entity inventory, diagrams, commands, or persistence mapping.
 3. **Application commands** — commands and their trigger,
    transaction boundary, authorization, aggregates loaded, domain methods called,
    persisted events, idempotency key, and failure behavior.
@@ -167,9 +171,10 @@ Minimum evidence rules:
   or runtime/layer dependencies are material to the design.
 - With two or more write aggregates in a domain, provide an Aggregate Map.
 - When an aggregate owns a child entity, or an invariant depends on relations among
-  internal objects, add both an **Aggregate Internal UML** and an **Entity
-  Inventory**. A simple root with only self-contained value objects may omit them,
-  but state the reason explicitly.
+  internal objects, add an **Aggregate Internal UML** and include those objects in
+  the domain's shared **Entity Inventory**. Do not repeat an inventory or root
+  checklist per aggregate. A simple root with only self-contained value objects
+  may omit these details; state the reason explicitly.
 - Add a State Diagram for any non-trivial lifecycle and a Command–Event–Query
   Flow for any eventually consistent state-changing Command.
 - Add Event Choreography when one business outcome crosses domains.
@@ -330,11 +335,12 @@ automatically a domain or aggregate.
 When asked to design or review a DDD system, return:
 
 1. the Domain Inventory and Domain Map;
-2. one Aggregate Root design for every write aggregate, naming the root and
-   documenting its aggregate boundary, owned objects, behaviors, and invariants;
-3. one Entity Inventory for every non-trivial aggregate: each entity/value object
-   has its identity (if any), key domain attributes, domain behaviors, and its
-   responsibility for invariants; this is a design contract, not an ORM field list;
+2. one consolidated Aggregate Root summary per domain: the explicit count,
+   each root's name, consistency boundary, and business responsibility; no repeated
+   per-root Identity / children / value objects / repository checklist tables;
+3. a domain-level Entity Inventory when object relationships or invariants need
+   it; list only decision-relevant identity, behavior, and responsibility, and do
+   not repeat the Aggregate Root summary or mechanically mirror ORM fields;
 4. one Command Card for every state-changing Command;
 5. query models and their freshness/consistency rules;
 6. public/internal API or message signatures;
